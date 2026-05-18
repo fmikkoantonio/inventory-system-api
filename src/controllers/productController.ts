@@ -2,14 +2,28 @@ import { Request, Response } from "express";
 import Product from "../models/Product";
 import InventoryLog from "../models/InventoryLog";
 import { AuthRequest } from "../middleware/authMiddleware";
+import { createProductSchema } from "../validators/productValidator";
+import { ZodError } from "zod";
 
 export const createProduct = async (req: Request, res: Response) => {
   try {
+    createProductSchema.parse(req.body);
+
     const product = await Product.create(req.body);
 
     res.status(201).json(product);
   } catch (error) {
     console.error(error);
+
+    if (error instanceof ZodError) {
+      return res.status(400).json({
+        message: "Validation failed",
+        errors: error.issues.map((err) => ({
+          field: err.path.join("."),
+          message: err.message,
+        })),
+      });
+    }
 
     res.status(500).json({
       message: "Failed to create product",

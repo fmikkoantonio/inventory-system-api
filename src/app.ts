@@ -7,6 +7,7 @@ import authRoutes from "./routes/authRoutes";
 import productRoutes from "./routes/productRoutes";
 import inventoryLogRoutes from "./routes/inventoryLogRoutes";
 import dashboardRoutes from "./routes/dashboardRoutes";
+import errorMiddleware from "./middleware/errorMiddleware";
 
 const app = express();
 
@@ -26,5 +27,7 @@ app.get("/", (_req, res) => {
     message: "Inventory System API Running",
   });
 });
+
+app.use(errorMiddleware);
 
 export default app;
