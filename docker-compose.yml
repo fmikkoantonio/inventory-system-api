@@ -1,14 +1,36 @@
 version: "3.9"
 
 services:
+  api:
+    build: .
+    container_name: inventory-api
+
+    ports:
+      - "5000:5000"
+
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+    env_file:
+      - .env
+
+    depends_on:
+      - mongodb
+
   mongodb:
     image: mongo:7
+
     container_name: inventory-mongodb
+
     restart: always
+
     ports:
       - "27017:27017"
+
     environment:
       MONGO_INITDB_DATABASE: inventory-system
+
     volumes:
       - mongodb_data:/data/db
 

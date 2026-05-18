@@ -5,11 +5,16 @@ import { AuthRequest } from "../middleware/authMiddleware";
 import { createProductSchema } from "../validators/productValidator";
 import { ZodError } from "zod";
 
-export const createProduct = async (req: Request, res: Response) => {
+export const createProduct = async (req: any, res: Response) => {
   try {
     createProductSchema.parse(req.body);
 
-    const product = await Product.create(req.body);
+    const image = req.file ? `/uploads/${req.file.filename}` : "";
+
+    const product = await Product.create({
+      ...req.body,
+      image,
+    });
 
     res.status(201).json(product);
   } catch (error) {
@@ -132,11 +137,7 @@ export const deleteProduct = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    const deletedProduct = await Product.findByIdAndUpdate(
-      id,
-      { status: "DELETED" },
-      { new: true },
-    );
+    const deletedProduct = await Product.findByIdAndDelete(id);
 
     if (!deletedProduct) {
       return res.status(404).json({

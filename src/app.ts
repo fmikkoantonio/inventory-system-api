@@ -8,6 +8,9 @@ import productRoutes from "./routes/productRoutes";
 import inventoryLogRoutes from "./routes/inventoryLogRoutes";
 import dashboardRoutes from "./routes/dashboardRoutes";
 import errorMiddleware from "./middleware/errorMiddleware";
+import swaggerUi from "swagger-ui-express";
+
+import swaggerSpec from "./config/swagger";
 
 const app = express();
 
@@ -16,11 +19,14 @@ app.use(helmet());
 app.use(morgan("dev"));
 app.use(express.json());
 
+app.use("/uploads", express.static("uploads"));
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/inventory-logs", inventoryLogRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get("/", (_req, res) => {
   res.json({

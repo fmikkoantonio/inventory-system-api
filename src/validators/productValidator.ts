@@ -12,4 +12,6 @@ export const createProductSchema = z.object({
   price: z.number().min(0),
 
   category: z.string().optional(),
+
+  image: z.string().optional(),
 });
