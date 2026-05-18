@@ -5,6 +5,8 @@ import morgan from "morgan";
 
 import authRoutes from "./routes/authRoutes";
 import productRoutes from "./routes/productRoutes";
+import inventoryLogRoutes from "./routes/inventoryLogRoutes";
+import dashboardRoutes from "./routes/dashboardRoutes";
 
 const app = express();
 
@@ -16,6 +18,8 @@ app.use(express.json());
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/inventory-logs", inventoryLogRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 app.get("/", (_req, res) => {
   res.json({
