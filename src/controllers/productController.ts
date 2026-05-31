@@ -68,7 +68,8 @@ export const getProducts = async (req: Request, res: Response) => {
         createdAt: -1,
       })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .populate("category");
 
     const total = await Product.countDocuments(query);
 
