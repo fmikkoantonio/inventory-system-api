@@ -16,7 +16,15 @@ import swaggerSpec from "./config/swagger";
 
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "http://localhost:4200",
+      "inventory-system-i8mjir3bg-fmikkoantonios-projects.vercel.app",
+    ],
+    credentials: true,
+  }),
+);
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
