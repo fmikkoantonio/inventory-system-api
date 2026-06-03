@@ -1,6 +1,10 @@
 import express from "express";
 
-import { getDashboardStats } from "../controllers/dashboardController";
+import {
+  getDashboardStats,
+  getLowStockProducts,
+  getRecentLogs,
+} from "../controllers/dashboardController";
 import authMiddleware from "../middleware/authMiddleware";
 
 const router = express.Router();
@@ -42,5 +46,9 @@ const router = express.Router();
  *         description: Server error
  */
 router.get("/", authMiddleware, getDashboardStats);
+
+router.get("/low-stock", authMiddleware, getLowStockProducts);
+
+router.get("/recent-logs", authMiddleware, getRecentLogs);
 
 export default router;

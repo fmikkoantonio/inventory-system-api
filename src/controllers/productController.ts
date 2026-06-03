@@ -4,6 +4,7 @@ import InventoryLog from "../models/InventoryLog";
 import { AuthRequest } from "../middleware/authMiddleware";
 import { createProductSchema } from "../validators/productValidator";
 import { ZodError } from "zod";
+import StockTransaction from "../models/StockTransaction";
 
 export const createProduct = async (req: any, res: Response) => {
   try {
@@ -15,6 +16,14 @@ export const createProduct = async (req: any, res: Response) => {
       ...req.body,
       image,
     });
+
+    if (product.quantity > 0) {
+      await StockTransaction.create({
+        product: product._id,
+        quantity: product.quantity,
+        type: "IN",
+      });
+    }
 
     res.status(201).json(product);
   } catch (error) {
@@ -112,21 +121,55 @@ export const updateProduct = async (req: AuthRequest, res: Response) => {
 
     const previousQuantity = existingProduct.quantity;
 
-    const updatedProduct = await Product.findByIdAndUpdate(id, req.body, {
+    // Handle image upload if present
+    const updateData = { ...req.body };
+    if ((req as any).file) {
+      updateData.image = `/uploads/${(req as any).file.filename}`;
+    }
+
+    const updatedProduct = await Product.findByIdAndUpdate(id, updateData, {
       new: true,
+      runValidators: true,
     });
 
-    await InventoryLog.create({
-      product: existingProduct._id,
-      action: "UPDATE",
-      previousQuantity,
-      newQuantity: updatedProduct?.quantity,
-      changedBy: req.user.id,
-    });
+    if (!updatedProduct) {
+      return res.status(404).json({
+        message: "Product not found",
+      });
+    }
+
+    // Only log if quantity changed
+    if (previousQuantity !== updatedProduct.quantity) {
+      await InventoryLog.create({
+        product: existingProduct._id,
+        action: "UPDATE",
+        previousQuantity,
+        newQuantity: updatedProduct.quantity,
+        changedBy: req.user.id,
+      });
+    }
 
     res.status(200).json(updatedProduct);
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
+
+    // Handle MongoDB duplicate key error
+    if (error.code === 11000) {
+      return res.status(400).json({
+        message: "SKU already exists",
+      });
+    }
+
+    // Handle validation errors
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        message: "Validation failed",
+        errors: Object.values(error.errors).map((err: any) => ({
+          field: err.path,
+          message: err.message,
+        })),
+      });
+    }
 
     res.status(500).json({
       message: "Failed to update product",
@@ -156,4 +199,10 @@ export const deleteProduct = async (req: Request, res: Response) => {
       message: "Failed to delete product",
     });
   }
+};
+
+export const getProductById = async (req: Request, res: Response) => {
+  const product = await Product.findById(req.params.id).populate("category");
+
+  res.status(200).json(product);
 };

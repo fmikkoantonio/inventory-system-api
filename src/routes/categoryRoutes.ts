@@ -3,6 +3,8 @@ import express from "express";
 import {
   createCategory,
   getCategories,
+  updateCategory,
+  deleteCategory,
 } from "../controllers/categoryController";
 
 import authMiddleware from "../middleware/authMiddleware";
@@ -77,5 +79,9 @@ router.get("/", authMiddleware, getCategories);
  *         description: Forbidden - Admin only
  */
 router.post("/", authMiddleware, roleMiddleware("admin"), createCategory);
+
+router.put("/:id", authMiddleware, roleMiddleware("admin"), updateCategory);
+
+router.delete("/:id", authMiddleware, roleMiddleware("admin"), deleteCategory);
 
 export default router;

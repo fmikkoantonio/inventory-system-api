@@ -12,3 +12,19 @@ export const getCategories = async (_req: Request, res: Response) => {
 
   res.status(200).json(categories);
 };
+
+export const updateCategory = async (req: Request, res: Response) => {
+  const category = await Category.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+  });
+
+  res.status(200).json(category);
+};
+
+export const deleteCategory = async (req: Request, res: Response) => {
+  await Category.findByIdAndDelete(req.params.id);
+
+  res.status(200).json({
+    message: "Category deleted",
+  });
+};

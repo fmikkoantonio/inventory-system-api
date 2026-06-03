@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 
 import Product from "../models/Product";
 import InventoryLog from "../models/InventoryLog";
+import Category from "../models/Category";
 
 export const getDashboardStats = async (_req: Request, res: Response) => {
   try {
@@ -26,11 +27,14 @@ export const getDashboardStats = async (_req: Request, res: Response) => {
       .limit(5)
       .populate("product");
 
+    const categoryCounts = await Category.find().lean().countDocuments();
+
     res.status(200).json({
       totalProducts,
       lowStockProducts,
       totalInventoryValue,
       recentActivity,
+      totalCategories: categoryCounts,
     });
   } catch (error) {
     console.error(error);
@@ -39,4 +43,31 @@ export const getDashboardStats = async (_req: Request, res: Response) => {
       message: "Failed to fetch dashboard stats",
     });
   }
+};
+
+export const getLowStockProducts = async (_req: Request, res: Response) => {
+  try {
+    const lowStockProducts = await Product.find({
+      quantity: {
+        $lt: 5,
+      },
+    }).populate("category");
+
+    res.status(200).json(lowStockProducts);
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: "Failed to fetch low stock products",
+    });
+  }
+};
+
+export const getRecentLogs = async (req: Request, res: Response) => {
+  const logs = await InventoryLog.find()
+    .populate("product")
+    .sort({ createdAt: -1 })
+    .limit(5);
+
+  res.status(200).json(logs);
 };

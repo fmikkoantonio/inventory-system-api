@@ -5,6 +5,7 @@ import {
   getProducts,
   updateProduct,
   deleteProduct,
+  getProductById,
 } from "../controllers/productController";
 
 import authMiddleware from "../middleware/authMiddleware";
@@ -158,7 +159,13 @@ router.get("/", authMiddleware, getProducts);
  *       404:
  *         description: Product not found
  */
-router.put("/:id", authMiddleware, roleMiddleware("admin"), updateProduct);
+router.put(
+  "/:id",
+  authMiddleware,
+  roleMiddleware("admin"),
+  upload.single("image"),
+  updateProduct,
+);
 
 /**
  * @swagger
@@ -187,5 +194,7 @@ router.put("/:id", authMiddleware, roleMiddleware("admin"), updateProduct);
  *         description: Product not found
  */
 router.delete("/:id", authMiddleware, roleMiddleware("admin"), deleteProduct);
+
+router.get("/:id", authMiddleware, getProductById);
 
 export default router;

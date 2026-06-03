@@ -7,9 +7,9 @@ export const createProductSchema = z.object({
 
   description: z.string().optional(),
 
-  quantity: z.number().min(0),
+  quantity: z.coerce.number().min(0),
 
-  price: z.number().min(0),
+  price: z.coerce.number().min(0),
 
   category: z.string().optional(),
 
