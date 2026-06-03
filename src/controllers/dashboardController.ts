@@ -71,3 +71,34 @@ export const getRecentLogs = async (req: Request, res: Response) => {
 
   res.status(200).json(logs);
 };
+
+export const getInventoryValueByCategory = async (
+  _req: Request,
+  res: Response,
+) => {
+  const data = await Product.aggregate([
+    {
+      $lookup: {
+        from: "categories",
+        localField: "category",
+        foreignField: "_id",
+        as: "category",
+      },
+    },
+    {
+      $unwind: "$category",
+    },
+    {
+      $group: {
+        _id: "$category.name",
+        value: {
+          $sum: {
+            $multiply: ["$price", "$quantity"],
+          },
+        },
+      },
+    },
+  ]);
+
+  res.json(data);
+};

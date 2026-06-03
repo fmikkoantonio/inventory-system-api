@@ -48,55 +48,55 @@ export const createProduct = async (req: any, res: Response) => {
 export const getProducts = async (req: Request, res: Response) => {
   try {
     const page = Number(req.query.page) || 1;
-
     const limit = Number(req.query.limit) || 10;
 
-    const search = req.query.search || "";
-
-    const category = req.query.category || "";
+    const search = req.query.search as string;
+    const category = req.query.category as string;
 
     const skip = (page - 1) * limit;
 
-    const query: any = {};
+    const filter: any = {};
 
-    // Search by product name
     if (search) {
-      query.name = {
-        $regex: search,
-        $options: "i",
-      };
+      filter.$or = [
+        {
+          name: {
+            $regex: search,
+            $options: "i",
+          },
+        },
+        {
+          sku: {
+            $regex: search,
+            $options: "i",
+          },
+        },
+      ];
     }
 
-    // Filter by category
     if (category) {
-      query.category = category;
+      filter.category = category;
     }
 
-    const products = await Product.find(query)
-      .sort({
-        createdAt: -1,
-      })
+    const products = await Product.find(filter)
+      .populate("category")
+      .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit)
-      .populate("category");
+      .limit(limit);
 
-    const total = await Product.countDocuments(query);
+    const total = await Product.countDocuments(filter);
 
     res.status(200).json({
-      data: products,
-
-      pagination: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
+      products,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
     });
   } catch (error) {
     console.error(error);
 
     res.status(500).json({
-      message: "Failed to fetch products",
+      message: "Failed to get products",
     });
   }
 };

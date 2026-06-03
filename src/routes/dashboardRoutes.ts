@@ -2,6 +2,7 @@ import express from "express";
 
 import {
   getDashboardStats,
+  getInventoryValueByCategory,
   getLowStockProducts,
   getRecentLogs,
 } from "../controllers/dashboardController";
@@ -51,4 +52,9 @@ router.get("/low-stock", authMiddleware, getLowStockProducts);
 
 router.get("/recent-logs", authMiddleware, getRecentLogs);
 
+router.get(
+  "/inventory-value-by-category",
+  authMiddleware,
+  getInventoryValueByCategory,
+);
 export default router;
