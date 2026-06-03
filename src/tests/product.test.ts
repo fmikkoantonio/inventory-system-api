@@ -196,6 +196,7 @@ describe("Product API", () => {
           name: "Test Product",
           sku: "TEST-001",
           price: 99.99,
+          quantity: 5,
         });
 
       const response = await request(app)
