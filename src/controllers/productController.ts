@@ -10,7 +10,7 @@ export const createProduct = async (req: any, res: Response) => {
   try {
     createProductSchema.parse(req.body);
 
-    const image = req.file ? `/uploads/${req.file.filename}` : "";
+    const image = req.file?.path || "";
 
     const product = await Product.create({
       ...req.body,
@@ -101,7 +101,7 @@ export const getProducts = async (req: Request, res: Response) => {
   }
 };
 
-export const updateProduct = async (req: AuthRequest, res: Response) => {
+export const updateProduct = async (req: any, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -123,8 +123,8 @@ export const updateProduct = async (req: AuthRequest, res: Response) => {
 
     // Handle image upload if present
     const updateData = { ...req.body };
-    if ((req as any).file) {
-      updateData.image = `/uploads/${(req as any).file.filename}`;
+    if (req.file) {
+      updateData.image = req.file.path;
     }
 
     const updatedProduct = await Product.findByIdAndUpdate(id, updateData, {

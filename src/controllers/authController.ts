@@ -21,6 +21,7 @@ export const register = async (req: Request, res: Response) => {
       name,
       email,
       password: hashedPassword,
+      role: "admin",
     });
 
     const token = jwt.sign(
