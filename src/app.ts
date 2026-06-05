@@ -20,7 +20,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:4200",
-      "inventory-system-i8mjir3bg-fmikkoantonios-projects.vercel.app",
+      "https://inventory-system-b399q6ada-fmikkoantonios-projects.vercel.app",
     ],
     credentials: true,
   }),
