@@ -5,7 +5,7 @@ import app from "../app";
 import User from "../models/User";
 
 let mongoServer: MongoMemoryServer;
-let adminToken: string;
+let primaryToken: string;
 let userToken: string;
 
 process.env.JWT_SECRET = "test-secret";
@@ -15,27 +15,24 @@ beforeAll(async () => {
   const uri = mongoServer.getUri();
   await mongoose.connect(uri);
 
-  // Create admin user
+  // Create first user
   await request(app).post("/api/auth/register").send({
-    name: "Admin User",
-    email: "admin@test.com",
-    password: "admin123",
+    name: "First User",
+    email: "user1@test.com",
+    password: "user123",
   });
 
-  // Update user to admin role
-  await User.findOneAndUpdate({ email: "admin@test.com" }, { role: "admin" });
-
-  // Login to get token with admin role
-  const adminLogin = await request(app).post("/api/auth/login").send({
-    email: "admin@test.com",
-    password: "admin123",
+  // Login first user
+  const primaryLogin = await request(app).post("/api/auth/login").send({
+    email: "user1@test.com",
+    password: "user123",
   });
-  adminToken = adminLogin.body.token;
+  primaryToken = primaryLogin.body.token;
 
-  // Create regular user
+  // Create second user
   const userResponse = await request(app).post("/api/auth/register").send({
-    name: "Regular User",
-    email: "user@test.com",
+    name: "Second User",
+    email: "user2@test.com",
     password: "user123",
   });
   userToken = userResponse.body.token;
@@ -48,10 +45,10 @@ afterAll(async () => {
 
 describe("Category API", () => {
   describe("POST /api/categories", () => {
-    it("should create a category as admin", async () => {
+    it("should create a category as authenticated user", async () => {
       const response = await request(app)
         .post("/api/categories")
-        .set("Authorization", `Bearer ${adminToken}`)
+        .set("Authorization", `Bearer ${primaryToken}`)
         .send({
           name: "Electronics",
         });
@@ -60,7 +57,7 @@ describe("Category API", () => {
       expect(response.body.name).toBe("Electronics");
     });
 
-    it("should not create category as regular user", async () => {
+    it("should create category as authenticated user", async () => {
       const response = await request(app)
         .post("/api/categories")
         .set("Authorization", `Bearer ${userToken}`)
@@ -68,7 +65,8 @@ describe("Category API", () => {
           name: "Books",
         });
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(201);
+      expect(response.body.name).toBe("Books");
     });
 
     it("should not create category without authentication", async () => {

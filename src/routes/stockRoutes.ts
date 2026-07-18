@@ -1,7 +1,6 @@
 import express from "express";
 
 import authMiddleware from "../middleware/authMiddleware";
-import roleMiddleware from "../middleware/roleMiddleware";
 
 import { updateStock } from "../controllers/stockController";
 
@@ -56,11 +55,9 @@ const router = express.Router();
  *         description: Bad request - Insufficient stock
  *       401:
  *         description: Unauthorized
- *       403:
- *         description: Forbidden - Admin only
  *       404:
  *         description: Product not found
  */
-router.post("/:id", authMiddleware, roleMiddleware("admin"), updateStock);
+router.post("/:id", authMiddleware, updateStock);
 
 export default router;

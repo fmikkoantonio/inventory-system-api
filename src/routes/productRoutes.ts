@@ -10,8 +10,6 @@ import {
 
 import authMiddleware from "../middleware/authMiddleware";
 
-import roleMiddleware from "../middleware/roleMiddleware";
-
 import upload from "../config/multer";
 
 const router = express.Router();
@@ -53,16 +51,9 @@ const router = express.Router();
  *         description: Product created successfully
  *       401:
  *         description: Unauthorized
- *       403:
- *         description: Forbidden - Admin only
+
  */
-router.post(
-  "/",
-  authMiddleware,
-  roleMiddleware("admin"),
-  upload.single("image"),
-  createProduct,
-);
+router.post("/", authMiddleware, upload.single("image"), createProduct);
 
 /**
  * @swagger
@@ -154,18 +145,11 @@ router.get("/", authMiddleware, getProducts);
  *         description: Product updated successfully
  *       401:
  *         description: Unauthorized
- *       403:
- *         description: Forbidden - Admin only
+
  *       404:
  *         description: Product not found
  */
-router.put(
-  "/:id",
-  authMiddleware,
-  roleMiddleware("admin"),
-  upload.single("image"),
-  updateProduct,
-);
+router.put("/:id", authMiddleware, upload.single("image"), updateProduct);
 
 /**
  * @swagger
@@ -188,12 +172,11 @@ router.put(
  *         description: Product deleted successfully
  *       401:
  *         description: Unauthorized
- *       403:
- *         description: Forbidden - Admin only
+
  *       404:
  *         description: Product not found
  */
-router.delete("/:id", authMiddleware, roleMiddleware("admin"), deleteProduct);
+router.delete("/:id", authMiddleware, deleteProduct);
 
 router.get("/:id", authMiddleware, getProductById);
 

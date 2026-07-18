@@ -6,7 +6,7 @@ import User from "../models/User";
 import Product from "../models/Product";
 
 let mongoServer: MongoMemoryServer;
-let adminToken: string;
+let primaryToken: string;
 let userToken: string;
 let productId: string;
 
@@ -17,27 +17,24 @@ beforeAll(async () => {
   const uri = mongoServer.getUri();
   await mongoose.connect(uri);
 
-  // Create admin user
+  // Create first user
   await request(app).post("/api/auth/register").send({
-    name: "Admin User",
-    email: "admin@test.com",
-    password: "admin123",
+    name: "First User",
+    email: "user1@test.com",
+    password: "user123",
   });
 
-  // Update user to admin role
-  await User.findOneAndUpdate({ email: "admin@test.com" }, { role: "admin" });
-
-  // Login to get token with admin role
-  const adminLogin = await request(app).post("/api/auth/login").send({
-    email: "admin@test.com",
-    password: "admin123",
+  // Login first user
+  const primaryLogin = await request(app).post("/api/auth/login").send({
+    email: "user1@test.com",
+    password: "user123",
   });
-  adminToken = adminLogin.body.token;
+  primaryToken = primaryLogin.body.token;
 
-  // Create regular user
+  // Create second user
   const userResponse = await request(app).post("/api/auth/register").send({
-    name: "Regular User",
-    email: "user@test.com",
+    name: "Second User",
+    email: "user2@test.com",
     password: "user123",
   });
   userToken = userResponse.body.token;
@@ -59,10 +56,10 @@ afterAll(async () => {
 
 describe("Stock API", () => {
   describe("POST /api/stock/:id", () => {
-    it("should add stock (IN) as admin", async () => {
+    it("should add stock (IN) as authenticated user", async () => {
       const response = await request(app)
         .post(`/api/stock/${productId}`)
-        .set("Authorization", `Bearer ${adminToken}`)
+        .set("Authorization", `Bearer ${primaryToken}`)
         .send({
           type: "IN",
           quantity: 20,
@@ -73,10 +70,10 @@ describe("Stock API", () => {
       expect(response.body.currentQuantity).toBe(70);
     });
 
-    it("should remove stock (OUT) as admin", async () => {
+    it("should remove stock (OUT) as authenticated user", async () => {
       const response = await request(app)
         .post(`/api/stock/${productId}`)
-        .set("Authorization", `Bearer ${adminToken}`)
+        .set("Authorization", `Bearer ${primaryToken}`)
         .send({
           type: "OUT",
           quantity: 10,
@@ -90,7 +87,7 @@ describe("Stock API", () => {
     it("should not allow insufficient stock removal", async () => {
       const response = await request(app)
         .post(`/api/stock/${productId}`)
-        .set("Authorization", `Bearer ${adminToken}`)
+        .set("Authorization", `Bearer ${primaryToken}`)
         .send({
           type: "OUT",
           quantity: 1000,
@@ -100,7 +97,7 @@ describe("Stock API", () => {
       expect(response.body.message).toBe("Insufficient stock");
     });
 
-    it("should not update stock as regular user", async () => {
+    it("should update stock as another authenticated user", async () => {
       const response = await request(app)
         .post(`/api/stock/${productId}`)
         .set("Authorization", `Bearer ${userToken}`)
@@ -109,7 +106,7 @@ describe("Stock API", () => {
           quantity: 5,
         });
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(200);
     });
 
     it("should not update stock without authentication", async () => {
@@ -125,7 +122,7 @@ describe("Stock API", () => {
       const fakeId = new mongoose.Types.ObjectId();
       const response = await request(app)
         .post(`/api/stock/${fakeId}`)
-        .set("Authorization", `Bearer ${adminToken}`)
+        .set("Authorization", `Bearer ${primaryToken}`)
         .send({
           type: "IN",
           quantity: 5,

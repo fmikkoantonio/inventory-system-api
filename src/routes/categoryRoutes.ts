@@ -8,7 +8,6 @@ import {
 } from "../controllers/categoryController";
 
 import authMiddleware from "../middleware/authMiddleware";
-import roleMiddleware from "../middleware/roleMiddleware";
 
 const router = express.Router();
 
@@ -75,13 +74,12 @@ router.get("/", authMiddleware, getCategories);
  *         description: Category created successfully
  *       401:
  *         description: Unauthorized
- *       403:
- *         description: Forbidden - Admin only
+
  */
-router.post("/", authMiddleware, roleMiddleware("admin"), createCategory);
+router.post("/", authMiddleware, createCategory);
 
-router.put("/:id", authMiddleware, roleMiddleware("admin"), updateCategory);
+router.put("/:id", authMiddleware, updateCategory);
 
-router.delete("/:id", authMiddleware, roleMiddleware("admin"), deleteCategory);
+router.delete("/:id", authMiddleware, deleteCategory);
 
 export default router;

@@ -6,7 +6,7 @@ import User from "../models/User";
 import Category from "../models/Category";
 
 let mongoServer: MongoMemoryServer;
-let adminToken: string;
+let primaryToken: string;
 let userToken: string;
 let categoryId: string;
 let productId: string;
@@ -18,27 +18,24 @@ beforeAll(async () => {
   const uri = mongoServer.getUri();
   await mongoose.connect(uri);
 
-  // Create admin user
+  // Create first user
   await request(app).post("/api/auth/register").send({
-    name: "Admin User",
-    email: "admin@test.com",
-    password: "admin123",
+    name: "First User",
+    email: "user1@test.com",
+    password: "user123",
   });
 
-  // Update user to admin role
-  await User.findOneAndUpdate({ email: "admin@test.com" }, { role: "admin" });
-
-  // Login to get token with admin role
-  const adminLogin = await request(app).post("/api/auth/login").send({
-    email: "admin@test.com",
-    password: "admin123",
+  // Login first user
+  const primaryLogin = await request(app).post("/api/auth/login").send({
+    email: "user1@test.com",
+    password: "user123",
   });
-  adminToken = adminLogin.body.token;
+  primaryToken = primaryLogin.body.token;
 
-  // Create regular user
+  // Create second user
   const userResponse = await request(app).post("/api/auth/register").send({
-    name: "Regular User",
-    email: "user@test.com",
+    name: "Second User",
+    email: "user2@test.com",
     password: "user123",
   });
   userToken = userResponse.body.token;
@@ -57,10 +54,10 @@ afterAll(async () => {
 
 describe("Product API", () => {
   describe("POST /api/products", () => {
-    it("should create a product as admin", async () => {
+    it("should create a product as authenticated user", async () => {
       const response = await request(app)
         .post("/api/products")
-        .set("Authorization", `Bearer ${adminToken}`)
+        .set("Authorization", `Bearer ${primaryToken}`)
         .send({
           name: "Laptop",
           sku: "LAP-001",
@@ -79,7 +76,7 @@ describe("Product API", () => {
     it("should not create product without required fields", async () => {
       const response = await request(app)
         .post("/api/products")
-        .set("Authorization", `Bearer ${adminToken}`)
+        .set("Authorization", `Bearer ${primaryToken}`)
         .send({
           name: "Phone",
         });
@@ -87,7 +84,7 @@ describe("Product API", () => {
       expect(response.status).toBe(400);
     });
 
-    it("should not create product as regular user", async () => {
+    it("should create product as another authenticated user", async () => {
       const response = await request(app)
         .post("/api/products")
         .set("Authorization", `Bearer ${userToken}`)
@@ -97,7 +94,9 @@ describe("Product API", () => {
           price: 499.99,
         });
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(201);
+      expect(response.body.name).toBe("Tablet");
+      expect(response.body.sku).toBe("TAB-001");
     });
 
     it("should not create product without authentication", async () => {
@@ -140,10 +139,10 @@ describe("Product API", () => {
   });
 
   describe("PUT /api/products/:id", () => {
-    it("should update a product as admin", async () => {
+    it("should update a product as authenticated user", async () => {
       const response = await request(app)
         .put(`/api/products/${productId}`)
-        .set("Authorization", `Bearer ${adminToken}`)
+        .set("Authorization", `Bearer ${primaryToken}`)
         .send({
           name: "Updated Laptop",
           price: 899.99,
@@ -153,7 +152,7 @@ describe("Product API", () => {
       expect(response.body.name).toBe("Updated Laptop");
     });
 
-    it("should not update product as regular user", async () => {
+    it("should update product as another authenticated user", async () => {
       const response = await request(app)
         .put(`/api/products/${productId}`)
         .set("Authorization", `Bearer ${userToken}`)
@@ -161,14 +160,15 @@ describe("Product API", () => {
           name: "Hacked Laptop",
         });
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(200);
+      expect(response.body.name).toBe("Hacked Laptop");
     });
 
     it("should return 404 for non-existent product", async () => {
       const fakeId = new mongoose.Types.ObjectId();
       const response = await request(app)
         .put(`/api/products/${fakeId}`)
-        .set("Authorization", `Bearer ${adminToken}`)
+        .set("Authorization", `Bearer ${primaryToken}`)
         .send({
           name: "Test",
         });
@@ -178,20 +178,20 @@ describe("Product API", () => {
   });
 
   describe("DELETE /api/products/:id", () => {
-    it("should delete a product as admin", async () => {
+    it("should delete a product as authenticated user", async () => {
       const response = await request(app)
         .delete(`/api/products/${productId}`)
-        .set("Authorization", `Bearer ${adminToken}`);
+        .set("Authorization", `Bearer ${primaryToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body.message).toBe("Product deleted successfully");
     });
 
-    it("should not delete product as regular user", async () => {
+    it("should delete product as another authenticated user", async () => {
       // Create another product first
       const createResponse = await request(app)
         .post("/api/products")
-        .set("Authorization", `Bearer ${adminToken}`)
+        .set("Authorization", `Bearer ${primaryToken}`)
         .send({
           name: "Test Product",
           sku: "TEST-001",
@@ -203,14 +203,14 @@ describe("Product API", () => {
         .delete(`/api/products/${createResponse.body._id}`)
         .set("Authorization", `Bearer ${userToken}`);
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(200);
     });
 
     it("should return 404 for non-existent product", async () => {
       const fakeId = new mongoose.Types.ObjectId();
       const response = await request(app)
         .delete(`/api/products/${fakeId}`)
-        .set("Authorization", `Bearer ${adminToken}`);
+        .set("Authorization", `Bearer ${primaryToken}`);
 
       expect(response.status).toBe(404);
     });
